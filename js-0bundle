@@ -1,0 +1,143 @@
+#!/usr/bin/env python
+import os
+import sys
+import subprocess
+import logging
+import hashlib
+import json
+import shutil
+pjoin = os.path.join
+
+ENV_VARS = ('NODE_PATH',)
+
+def main():
+	from optparse import OptionParser
+	p = OptionParser("Usage: %prog [options] file-or-uri")
+	p.add_option('-v', '--verbose', action='store_true')
+	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
+	p.add_option('-l', '--list', action='store_true', help='dump space-separated <feed> <dir1 ...> list')
+	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
+			help='add a command line option to `0launch --get-selections` (may be specifid multiple times)')
+	p.add_option('-e', '--env', action='append', dest='env_vars', default=[],
+			help="look for this env var (default ['NODE_PATH'], can be specified multiple times)")
+	opts, args = p.parse_args()
+	level = logging.DEBUG if opts.verbose else logging.INFO
+	logging.basicConfig(level=level, format='%(message)s')
+	try:
+		(url,) = args
+	except ValueError,e:
+		p.print_usage()
+		return 1
+
+	env_vars = opts.env_vars or ENV_VARS
+
+	selections_xml = subprocess.check_output([
+		'0launch',
+		'--get-selections',
+		'--download-only',
+		'--command=',
+		'--console'] + opts.extra_opts + [url])
+
+	def mkdirs(path):
+		if opts.list: return
+		if not os.path.isdir(path):
+			os.makedirs(path)
+
+	from BeautifulSoup import BeautifulStoneSoup
+	selectionSoup = BeautifulStoneSoup(selections_xml)
+	selectionElems = selectionSoup.findAll("selection")
+	selections = map(Selection, selectionElems)
+	logging.debug('found %s selections' % (len(selections),))
+	mkdirs(opts.output)
+
+	if opts.list:
+		listing = {}
+		for selection in selections:
+			selection_paths = selection.paths(env_vars)
+			if not selection_paths: continue
+			full_paths = [pjoin(selection.path, relpath) for relpath in selection_paths]
+			listing[selection.interface] = full_paths
+		print json.dumps(listing, indent=2)
+		return
+	
+	index = {}
+	for selection in selections:
+		selection_paths = selection.paths(env_vars)
+		if not selection_paths:
+			logging.debug("skipping selection for %s as it has no interesting envvars" % (selection.interface,))
+			continue
+
+		index[selection.interface] = selection.folder
+		dest_path = pjoin(opts.output, selection.folder)
+
+		logging.info("\n%s: %s paths to copy" % (
+			selection.interface, len(selection_paths)))
+
+		if(os.path.exists(dest_path)):
+			shutil.rmtree(dest_path)
+
+		for src_relpath in selection_paths:
+			src_path = pjoin(selection.path, src_relpath)
+			logging.info("copying:\n  %s\n  -> %s" % (src_path, dest_path))
+			mkdirs(dest_path)
+			for filename in os.listdir(src_path):
+				src_file = pjoin(src_path, filename)
+				dest_file = pjoin(dest_path, filename)
+				if os.path.exists(dest_file):
+					logging.warn("ALREADY EXISTS: %s - not overwriting" % (dest_file,))
+					continue
+				if os.path.isdir(src_file):
+					shutil.copytree(src_file, dest_file)
+				else:
+					shutil.copyfile(src_file, dest_file)
+
+	with open(pjoin(opts.output, 'index.json'), 'w') as out:
+		json.dump(index, out, indent=2)
+
+class Selection(object):
+	def __init__(self, selection):
+		self.interface = selection['interface']
+		self.selection = selection
+		self._path = None
+		try:
+			self._path = self.selection['local-path']
+		except KeyError: pass
+		self.local_feed = self._path is not None
+	
+	def __repr__(self):
+		return "<#Selection for %r>" % (self.interface,)
+	
+	@property
+	def folder(self):
+		if self.local_feed:
+			folder = hashlib.sha1(self.path).hexdigest()
+		else:
+			folder = self.selection['id']
+		assert os.path.sep not in folder
+		assert '.' not in folder
+		return folder
+	
+	def paths(self, env_vars):
+		paths = set()
+		for binding in self.selection.findAll("environment"):
+			if binding['name'] in env_vars:
+				paths.add(binding.get('insert', ''))
+		return paths
+
+	@property
+	def path(self):
+		if self._path:
+			return self._path
+
+		manifest_attrs = self.selection.find('manifest-digest').attrs
+		for attr, val in manifest_attrs:
+			try:
+				logging.debug("looking for %s=%s" % (attr, val))
+				return subprocess.check_output(['0store', 'find', ('='.join([attr, val]))]).strip()
+			except subprocess.CalledProcessError, e:
+				logging.debug(e)
+		raise RuntimeEror("can't find path for selection: %s" % (self.selection,))
+
+if __name__ == '__main__':
+	sys.exit(main())
+
