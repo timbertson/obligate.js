@@ -15,7 +15,6 @@ def main():
 	p = OptionParser("Usage: %prog [options] file-or-uri")
 	p.add_option('-v', '--verbose', action='store_true')
 	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
-	p.add_option('-l', '--list', action='store_true', help='dump space-separated <feed> <dir1 ...> list')
 	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
 			help='add a command line option to `0launch --get-selections` (may be specifid multiple times)')
 	p.add_option('-e', '--env', action='append', dest='env_vars', default=[],
@@ -39,7 +38,6 @@ def main():
 		'--console'] + opts.extra_opts + [url])
 
 	def mkdirs(path):
-		if opts.list: return
 		if not os.path.isdir(path):
 			os.makedirs(path)
 
@@ -48,51 +46,47 @@ def main():
 	selectionElems = selectionSoup.findAll("selection")
 	selections = map(Selection, selectionElems)
 	logging.debug('found %s selections' % (len(selections),))
-	mkdirs(opts.output)
 
-	if opts.list:
-		listing = {}
-		for selection in selections:
-			selection_paths = selection.paths(env_vars)
-			if not selection_paths: continue
-			full_paths = [pjoin(selection.path, relpath) for relpath in selection_paths]
-			listing[selection.interface] = full_paths
-		print json.dumps(listing, indent=2)
-		return
-	
-	index = {}
+	dest_path = opts.output
+
+	if(os.path.exists(dest_path)):
+		#TODO: add --force flag
+		if raw_input("rm -f on %s? " % (dest_path)) == 'y':
+			shutil.rmtree(dest_path)
+		else:
+			return False
+
+	mkdirs(dest_path)
+
 	for selection in selections:
 		selection_paths = selection.paths(env_vars)
 		if not selection_paths:
 			logging.debug("skipping selection for %s as it has no interesting envvars" % (selection.interface,))
 			continue
 
-		index[selection.interface] = selection.folder
-		dest_path = pjoin(opts.output, selection.folder)
-
 		logging.info("\n%s: %s paths to copy" % (
 			selection.interface, len(selection_paths)))
-
-		if(os.path.exists(dest_path)):
-			shutil.rmtree(dest_path)
 
 		for src_relpath in selection_paths:
 			src_path = pjoin(selection.path, src_relpath)
 			logging.info("copying:\n  %s\n  -> %s" % (src_path, dest_path))
-			mkdirs(dest_path)
 			for filename in os.listdir(src_path):
 				src_file = pjoin(src_path, filename)
 				dest_file = pjoin(dest_path, filename)
 				if os.path.exists(dest_file):
-					logging.warn("ALREADY EXISTS: %s - not overwriting" % (dest_file,))
+					logging.warn("FILENAME CLASH: %s - not overwriting" % (dest_file,))
 					continue
 				if os.path.isdir(src_file):
 					shutil.copytree(src_file, dest_file)
 				else:
 					shutil.copyfile(src_file, dest_file)
-
-	with open(pjoin(opts.output, 'index.json'), 'w') as out:
-		json.dump(index, out, indent=2)
+	
+	cwd = os.getcwd()
+	os.chdir(dest_path)
+	try:
+		subprocess.check_call(['tar', 'cf', pjoin(cwd, dest_path + '.tar'), '.'])
+	finally:
+		os.chdir(cwd)
 
 class Selection(object):
 	def __init__(self, selection):

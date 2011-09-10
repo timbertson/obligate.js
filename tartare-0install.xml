@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface uri="http://gfxmonk.net/dist/0install/tartare-0install.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+	<name>tartare-0install</name>
+	<summary>___</summary>
+	<publish mode="featured|third-party|package|0tools|ignore" xmlns="http://gfxmonk.net/dist/0install"/>
+	<description>
+	___
+	</description>
+	<homepage>___</homepage>
+	<package-implementation package="___" distributions="Debian|RPM"/>
+
+	<group main="___">
+		<command name="run" path="___">
+			<runner interface="___"/>
+		</command>
+		<requires interface="___"/>
+		<environment name="___" insert="" mode="prepend" />
+
+		<implementation id="." version="0.0.1">
+		</implementation>
+	</group>
+</interface>
