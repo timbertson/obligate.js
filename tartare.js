@@ -52,13 +52,13 @@ THE SOFTWARE.
       cb();
     });
   };
-#ifdef APOLLO
+
   exports.addArchive = function(url) {
     waitfor() {
       exports.addArchiveAsync(url, resume);
     }
   };
-#endif
+
 
   function cleanPath(path) {
     return path.replace(/^\.\//, ''); // strip leading './'
@@ -74,7 +74,7 @@ THE SOFTWARE.
       eval(data);
       return exports;
     }
-#ifdef APOLLO
+
     ,'sjs': function(data) {
       var module = {
         exports: {}
@@ -83,7 +83,7 @@ THE SOFTWARE.
       compile(data, module);
       return module.exports;
     }
-#endif
+
   };
 
   // standalone require() impl, if you don't want to install() it
@@ -147,13 +147,13 @@ THE SOFTWARE.
     });
   };
 
-#ifdef APOLLO
+
   exports.install = function(tarfile, extensions) {
     waitfor() {
       exports.installAsync(tarfile, resume, extensions);
     }
   };
-#endif
+
 
   exports.paths = function() {
     var paths = [];
@@ -178,7 +178,7 @@ THE SOFTWARE.
     onerror : null,
     onload : null,
     onstream : null,
-    
+
     load : function(url) {
       var xhr = new XMLHttpRequest();
       var self = this;
@@ -204,17 +204,17 @@ THE SOFTWARE.
       xhr.setRequestHeader("Content-Type", "text/plain");
       xhr.send(null);
     },
-  
+
     onerror : function(xhr) {
       alert("Error: "+xhr.status);
     },
-  
+
     cleanHighByte : function(s) {
       return s.replace(/./g, function(m) {
         return String.fromCharCode(m.charCodeAt(0) & 0xff);
       });
     },
-    
+
     parseTar : function(text) {
       this.files = [];
       this.processTarChunks(text, 0);
