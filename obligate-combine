@@ -3,7 +3,7 @@ import logging
 import os
 import json
 
-# each loader is called with a local `exports` variable in context
+# each loader is called with a local `exports` variable in scope
 def js_loader(contents):
 	return contents
 def sjs_loader(contents):
