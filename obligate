@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+base="$(dirname "$0")"
+cmd="$1"
+shift 1
+[ "$cmd" = "gather" -o "$cmd" = "combine" ] || (echo "Usage: obligate (combine|gather) OPTIONS..."; exit 1)
+exec "$base/obligate-$cmd" "$@"

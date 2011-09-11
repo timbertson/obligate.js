@@ -15,6 +15,7 @@ def main():
 	p = OptionParser("Usage: %prog [options] file-or-uri")
 	p.add_option('-v', '--verbose', action='store_true')
 	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
+	p.add_option('-f', '--force', action='store_true', help='clobber output dir without asking if it exists', default='0cache')
 	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
 			help='add a command line option to `0launch --get-selections` (may be specifid multiple times)')
 	p.add_option('-e', '--env', action='append', dest='env_vars', default=[],
@@ -51,7 +52,7 @@ def main():
 
 	if(os.path.exists(dest_path)):
 		#TODO: add --force flag
-		if raw_input("rm -f on %s? " % (dest_path)) == 'y':
+		if opts.force or raw_input("run rm -rf on %s? " % (dest_path)) == 'y':
 			shutil.rmtree(dest_path)
 		else:
 			return False
@@ -80,13 +81,6 @@ def main():
 					shutil.copytree(src_file, dest_file)
 				else:
 					shutil.copyfile(src_file, dest_file)
-	
-	cwd = os.getcwd()
-	os.chdir(dest_path)
-	try:
-		subprocess.check_call(['tar', 'cf', pjoin(cwd, dest_path + '.tar'), '.'])
-	finally:
-		os.chdir(cwd)
 
 class Selection(object):
 	def __init__(self, selection):
