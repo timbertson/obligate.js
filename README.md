@@ -19,20 +19,20 @@ Tada! Your code works in both node and the browser without doing anything specia
 #The _obligatory_ integration
 _of an already awkward metaphor_
 
-If you use [Zero Install][] (you _should_!), you get all your dependencies included for free. Just:
+If you use [Zero Install][0install] (you _should_!), you get all your dependencies included for free. Just:
 
-2. run `obligate gather [your-feed-file]` and it'll create a `0cache` directory that combines everything from all of your dependencies (and your own app) that would end up on `$NODE_PATH` at runtime (this is configurable if you don't use `$NODE_PATH`)
-3. run `obligate combine 0cache` as above.
+1. run `obligate gather [your-feed-file]` and it'll create a `0cache` directory that combines everything from all of your dependencies (and your own app) that would end up on `$NODE_PATH` at runtime (this is configurable if you don't use `$NODE_PATH`)
+2. run `obligate combine 0cache` as above.
 
 #What the FAQ?
 
 ### Why don't you use [some other javascript dependency mananger], it's great!
 
-I already have an excellent dependency manager ([Zero Install][]) that works for any language, while most people who code in the same languages as I do use something like the set of `apt-get`, `npm`, `pip`, `setuptools`, `gem`, `cabal`, `ivy` and a whole bunch of manual steps because these tools can't handle anything out of their own language's domain. You really think we need _more_ dependency managers that can only do one thing?
+I already have an excellent dependency manager ([Zero Install][0install]) that works for any language, while most people who code in the same languages as I do use something like the set of `apt-get`, `npm`, `pip`, `setuptools`, `gem`, `cabal`, `ivy` and a whole bunch of manual steps because these tools can't handle anything out of their own language's domain. You really think we need _more_ dependency managers that can only do one thing?
 
 ### [node-browserify][browserify] already supports `require()` for browsers
 
-I know, that's what prompted me to do this! It looks pretty big and complicated, and doesn't support Zero Install. But you should try it out if you like its features (it includes implementations of many builtin node libraries).
+I know, that's what prompted me to do this! It looks pretty big and complicated though, and it uses `npm` (see above question for reasons that's bad). Obligate is tiny (less that 100 lines of javascript), and has simple (optional) integration with Zero Install. But you should try out browserify if you like its features (it includes implementations of many builtin node libraries).
 
 ### What's missing?
 
@@ -41,3 +41,4 @@ Relative requires don't work yet, and `index.js` isn't dealt with correctly. Pat
 [tartare-0bundle]: http://gfxmonk.net/dist/0install/tartare-0bundle.xml
 [browserify]:      https://github.com/substack/node-browserify
 [commonJS]:        http://www.commonjs.org/specs/modules/1.0/
+[0install]:        http://0install.net/
