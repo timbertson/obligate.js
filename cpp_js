@@ -1,0 +1,2 @@
+#!/bin/sh
+exec cpp -P -undef -Wundef -std=c99 -traditional-cpp -nostdinc -Wtrigraphs -fdollars-in-identifiers "$@"

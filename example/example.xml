@@ -7,6 +7,8 @@
 	example feed
 	</description>
 	<group>
+		<command name="run" path="test.sh">
+		</command>
 		<requires interface="http://gfxmonk.net/dist/0install/coffee-spec.xml"/>
 		<environment insert="lib" name="NODE_PATH" mode="prepend"/>
 		<implementation id="." version="0.0.1">

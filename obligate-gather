@@ -14,6 +14,7 @@ def main():
 	from optparse import OptionParser
 	p = OptionParser("Usage: %prog [options] file-or-uri")
 	p.add_option('-v', '--verbose', action='store_true')
+	p.add_option('-q', '--quiet', action='store_true')
 	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
 	p.add_option('-f', '--force', action='store_true', help='clobber output dir without asking if it exists', default='0cache')
 	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
@@ -21,7 +22,9 @@ def main():
 	p.add_option('-e', '--env', action='append', dest='env_vars', default=[],
 			help="look for this env var (default ['NODE_PATH'], can be specified multiple times)")
 	opts, args = p.parse_args()
-	level = logging.DEBUG if opts.verbose else logging.INFO
+	level = logging.INFO
+	if opts.verbose: level = logging.DEBUG
+	if opts.quiet:   level = logging.WARN
 	logging.basicConfig(level=level, format='%(message)s')
 	try:
 		(url,) = args
@@ -65,12 +68,12 @@ def main():
 			logging.debug("skipping selection for %s as it has no interesting envvars" % (selection.interface,))
 			continue
 
-		logging.info("\n%s: %s paths to copy" % (
+		logging.debug("\n%s: %s paths to copy" % (
 			selection.interface, len(selection_paths)))
 
 		for src_relpath in selection_paths:
 			src_path = pjoin(selection.path, src_relpath)
-			logging.info("copying:\n  %s\n  -> %s" % (src_path, dest_path))
+			logging.debug("copying:\n  %s\n  -> %s" % (src_path, dest_path))
 			for filename in os.listdir(src_path):
 				src_file = pjoin(src_path, filename)
 				dest_file = pjoin(dest_path, filename)

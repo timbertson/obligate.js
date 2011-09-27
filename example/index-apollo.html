@@ -1,0 +1,16 @@
+<html>
+	<head>
+		<script src="../../apollo/oni-apollo.js"></script>
+		<script src="obligate-modules-apollo.js"></script>
+
+		<script type="text/sjs">
+			hold(100);
+			// test that it can be loaded both via `obligate:` and `nodejs:`
+			document.write(require("obligate:hello.sjs").greet("world") + "<br />" +
+				require("nodejs:hello.sjs").greet("world"));
+		</script>
+	</head>
+	<body>
+	</body>
+</html>
+

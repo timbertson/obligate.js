@@ -12,7 +12,7 @@ Here's what you're going to do. You're going to write javascript just as you wou
 
 Then, you run `obligate combine [root-js-folder]` to create `obligate-modules.js` which now contains the code for *all* modules.
 
-In your client-side code, include `lib/obligate.js`, followed by `obligate-modules.js`. Then, just run `Obligate.install()` to install obligate's `require` function.
+In your client-side code, include `obligate-modules.js`. Then, just run `Obligate.install()` to install obligate's `require` function globally. If you don't want to install it globally, you can instead call `Obligate.require()` as needed.
 
 Tada! Your code works in both node and the browser without doing anything special. Except of course you can't use any of node's builtin modules in the browser. I'm not [_crazy_][browserify], you know.
 
@@ -37,6 +37,18 @@ I know, that's what prompted me to do this! It looks pretty big and complicated 
 ### What's missing?
 
 Relative requires don't work yet, and `index.js` isn't dealt with correctly. Patches welcome, the code is pretty simple.
+
+### (experimental) apollo support
+
+Obligate has tentative support for stratified javascript on [oni apollo](http://onilabs.com/). It's mostly the same as for vanilla javascript, except that:
+
+ - it adds an `obligate:` hub - instead of `require("foo")`, you should do `require("obligate:foo")`
+ - you should pass `--apollo` into `obligate combine` to tell it to spit out an apollo-compatible `obligate-modules.js` file.
+
+Note that to have the `obligate:` hub available in node-based command-line scripts, you'll need to add `obligate-modules.js` to your `$APOLLO_INIT` path (or require it explicitly).
+
+If you just want to alias the `obligate:` hub to `nodejs:` on the console (i.e all your dependencies are available via `$NODE_PATH`), you can add `lib/nodejs-alias.sjs` to your `$APOLLO_INIT` path instead of generating an `obligate-modules/js` file.
+
 
 [tartare-0bundle]: http://gfxmonk.net/dist/0install/tartare-0bundle.xml
 [browserify]:      https://github.com/substack/node-browserify

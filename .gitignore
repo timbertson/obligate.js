@@ -1,2 +1,5 @@
 0cache.js
 0cache/
+0inst
+lib/*.js
+*-local.xml

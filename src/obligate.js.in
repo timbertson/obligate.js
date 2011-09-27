@@ -31,29 +31,19 @@ THE SOFTWARE.
 		var exports = Obligate;
 	}
 
-	var extensions=['js'];
+	exports.extensions = ['js'];
 	var filemap = {};
 	exports.def = function defineModuleLoader(path, fn) {
 		filemap[path] = fn;
 	};
 
-	var oldRequire = function(file) {
-		throw new Error("Could not find file: " + file);
-	};
-
-	// standalone require() impl, if you don't want to install() it
-	var req = exports.require = function(file) {
-		if(!req.modules[file]) {
-			var loader = tryLookup(file, extensions);
-			if(!loader) {
-				return oldRequire.apply(this, arguments);
-			}
-			var exports = req.modules[file] = {};
-			loader(exports);
+	var lookup = exports.lookup = function(filename) {
+		var data = tryLookup(filename);
+		if(data == null) {
+			throw new Error("can't find file to require: " + filename);
 		}
-		return req.modules[file];
+		return data;
 	};
-	req.modules = {};
 
 	function tryLookup(filename) {
 		function lookup(filename) {
@@ -63,8 +53,8 @@ THE SOFTWARE.
 		if(plain) {
 			return plain;
 		}
-		for(var i=0; i<extensions.length; i++) {
-			var extension = extensions[i];
+		for(var i=0; i<exports.extensions.length; i++) {
+			var extension = exports.extensions[i];
 			var filename_ext = filename + '.' + extension;
 			var data = lookup(filename_ext);
 			if(data) {
@@ -72,17 +62,6 @@ THE SOFTWARE.
 			}
 		}
 		return null;
-	};
-
-	exports.install = function(extensionsOverride) {
-		var existingRequire = global.require;
-		if(existingRequire !== undefined) {
-			oldRequire = existingRequire;
-		}
-		if(extensionsOverride) {
-			extensions = extensionsOverride;
-		}
-		global.require = exports.require;
 	};
 
 	exports.paths = function() {
@@ -94,4 +73,59 @@ THE SOFTWARE.
 		}
 		return paths;
 	};
+
+#ifndef APOLLO
+	exports.install = function(extensionsOverride) {
+		var existingRequire = global.require;
+		if(existingRequire !== undefined) {
+			oldRequire = existingRequire;
+		}
+		if(extensionsOverride) {
+			exports.extensions = extensionsOverride;
+		}
+		global.require = exports.require;
+	};
+
+	var oldRequire = function(file) {
+		throw new Error("Could not find file: " + file);
+	};
+
+	// standalone require() impl, if you don't want to install() it
+	var req = exports.require = function(file) {
+		if(!req.modules[file]) {
+			var data = tryLookup(file);
+			if(!data) {
+				return oldRequire.apply(this, arguments);
+			}
+			var exports = req.modules[file] = {};
+			data(exports);
+		}
+		return req.modules[file];
+	};
+	req.modules = {};
+#endif
+
+
+#ifdef APOLLO
+	var sys = require('sjs:apollo-sys');
+
+	exports.extensions.unshift('sjs');
+	var hub = ['obligate:', {
+			src: function(path) {
+				path = path.replace(/^obligate:/, '');
+				return {
+					src: exports.lookup(path),
+					loaded_from: path
+				};
+			}
+		}
+	];
+	if(sys.hostenv == 'xbrowser') {
+		//TODO: is this a good idea? it's more prone to clashes / confusion
+		// than stubbornly sticking to only `obligate:`
+		require.hubs.push(['nodejs:', 'obligate:']);
+	}
+	require.hubs.push(hub);
+#endif
+
 }).call(this);

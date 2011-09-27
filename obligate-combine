@@ -3,28 +3,33 @@ import logging
 import os
 import json
 
-# each loader is called with a local `exports` variable in scope
+# js loader is called with a local `exports` variable in scope
 def js_loader(contents):
-	return contents
+	return "(function(exports) {\n" + contents + "\n})"
+
+# sjs loader can't represent code in JS syntax - have to return it as a string
+# TODO: investigate pre-compilation?
 def sjs_loader(contents):
-	return """
-		var module = {
-			exports: exports
-		};
-		var compile = require('sjs:apollo-sys').require.extensions.sjs;
-		compile(""" + json.dumps(contents) + """, module);
-		"""
+	lines = contents.splitlines()
+	return " +\n".join(map(json.dumps, lines))
 
 loaders = {
-	'.js': js_loader,
-	'.sjs': sjs_loader
+	'.js': js_loader
 }
 
 def main():
 	from optparse import OptionParser
 	p = OptionParser("Usage: %prog [options] js_root")
 	p.add_option('-v', '--verbose', action='store_true')
+	p.add_option('--apollo', action='store_true', help='include .sjs (straitifed JS) resources and insteall an obligate: apollo hub')
+	p.add_option('-o', '--output', default='obligate-modules.js')
+	p.add_option('-x', '--exclude', action='append', dest='exclusions', default=[])
 	opts, args = p.parse_args()
+	lib_file = 'obligate.js'
+	if opts.apollo:
+		lib_file = 'obligate-apollo.js'
+		loaders['.sjs'] = sjs_loader
+	
 	level = logging.DEBUG if opts.verbose else logging.INFO
 	logging.basicConfig(level=level, format='%(message)s')
 
@@ -43,11 +48,14 @@ def main():
 				with open(fullpath) as infile:
 					commonprefix = os.path.commonprefix((base, fullpath))
 					relative_path = fullpath[len(commonprefix):].lstrip(os.path.sep)
+					if relative_path in opts.exclusions: continue
 					modules[relative_path] = loaders[ext](infile.read())
 
-	with open('obligate-modules.js', 'w') as outfile:
+	with open(opts.output, 'w') as outfile:
+		with open(os.path.join(os.environ['OBLIGATE_LIB'],lib_file)) as obligate:
+			outfile.write(obligate.read())
 		for path, contents in modules.items():
-			outfile.write('Obligate.def(' + json.dumps(path) + ", (function(exports) {" + contents + "}));\n\n")
+			outfile.write('Obligate.def(' + json.dumps(path) + ", " + contents + ");\n")
 
 if __name__ == '__main__':
 	import sys
