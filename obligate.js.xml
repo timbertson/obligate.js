@@ -19,7 +19,7 @@ Here's what you're going to do. You're going to write javascript just as you wou
 
 Then, you run `obligate combine [root-js-folder]` to create `obligate-modules.js` which now contains the code for *all* modules.
 
-In your client-side code, include `lib/obligate.js`, followed by `obligate-modules.js`. Then, just run `Obligate.install()` to install obligate's `require` function.
+In your client-side code, include `obligate-modules.js`. Then, just run `Obligate.install()` to install obligate's `require` function globally. If you don't want to install it globally, you can instead call `Obligate.require()` as needed.
 
 Tada! Your code works in both node and the browser without doing anything special. Except of course you can't use any of node's builtin modules in the browser. I'm not [_crazy_][browserify], you know.
 
@@ -45,6 +45,18 @@ I know, that's what prompted me to do this! It looks pretty big and complicated 
 
 Relative requires don't work yet, and `index.js` isn't dealt with correctly. Patches welcome, the code is pretty simple.
 
+### (experimental) apollo support
+
+Obligate has tentative support for stratified javascript on [oni apollo](http://onilabs.com/). It's mostly the same as for vanilla javascript, except that:
+
+ - it adds an `obligate:` hub - instead of `require("foo")`, you should do `require("obligate:foo")`
+ - you should pass `--apollo` into `obligate combine` to tell it to spit out an apollo-compatible `obligate-modules.js` file.
+
+Note that to have the `obligate:` hub available in node-based command-line scripts, you'll need to add `obligate-modules.js` to your `$APOLLO_INIT` path (or require it explicitly).
+
+If you just want to alias the `obligate:` hub to `nodejs:` on the console (i.e all your dependencies are available via `$NODE_PATH`), you can add `lib/nodejs-alias.sjs` to your `$APOLLO_INIT` path instead of generating an `obligate-modules/js` file.
+
+
 [tartare-0bundle]: http://gfxmonk.net/dist/0install/tartare-0bundle.xml
 [browserify]:      https://github.com/substack/node-browserify
 [commonJS]:        http://www.commonjs.org/specs/modules/1.0/
@@ -67,7 +79,7 @@ Relative requires don't work yet, and `index.js` isn't dealt with correctly. Pat
 				<li>use <code>var mod = require("my/awesome/module")</code> when you need to use another module</li>
 			</ol>
 			<p>Then, you run <code>obligate combine [root-js-folder]</code> to create <code>obligate-modules.js</code> which now contains the code for <em>all</em> modules.</p>
-			<p>In your client-side code, include <code>lib/obligate.js</code>, followed by <code>obligate-modules.js</code>. Then, just run <code>Obligate.install()</code> to install obligate's <code>require</code> function.</p>
+			<p>In your client-side code, include <code>obligate-modules.js</code>. Then, just run <code>Obligate.install()</code> to install obligate's <code>require</code> function globally. If you don't want to install it globally, you can instead call <code>Obligate.require()</code> as needed.</p>
 			<p>Tada! Your code works in both node and the browser without doing anything special. Except of course you can't use any of node's builtin modules in the browser. I'm not <a href="https://github.com/substack/node-browserify"><em>crazy</em></a>, you know.</p>
 			<h1 id="the-obligatory-integration">The <em>obligatory</em> integration</h1>
 			<p>
@@ -85,6 +97,14 @@ Relative requires don't work yet, and `index.js` isn't dealt with correctly. Pat
 			<p>I know, that's what prompted me to do this! It looks pretty big and complicated though, and it uses <code>npm</code> (see above question for reasons that's bad). Obligate is tiny (less that 100 lines of javascript), and has simple (optional) integration with Zero Install. But you should try out browserify if you like its features (it includes implementations of many builtin node libraries).</p>
 			<h3 id="whats-missing">What's missing?</h3>
 			<p>Relative requires don't work yet, and <code>index.js</code> isn't dealt with correctly. Patches welcome, the code is pretty simple.</p>
+			<h3 id="experimental-apollo-support">(experimental) apollo support</h3>
+			<p>Obligate has tentative support for stratified javascript on <a href="http://onilabs.com/">oni apollo</a>. It's mostly the same as for vanilla javascript, except that:</p>
+			<ul>
+				<li>it adds an <code>obligate:</code> hub - instead of <code>require("foo")</code>, you should do <code>require("obligate:foo")</code></li>
+				<li>you should pass <code>--apollo</code> into <code>obligate combine</code> to tell it to spit out an apollo-compatible <code>obligate-modules.js</code> file.</li>
+			</ul>
+			<p>Note that to have the <code>obligate:</code> hub available in node-based command-line scripts, you'll need to add <code>obligate-modules.js</code> to your <code>$APOLLO_INIT</code> path (or require it explicitly).</p>
+			<p>If you just want to alias the <code>obligate:</code> hub to <code>nodejs:</code> on the console (i.e all your dependencies are available via <code>$NODE_PATH</code>), you can add <code>lib/nodejs-alias.sjs</code> to your <code>$APOLLO_INIT</code> path instead of generating an <code>obligate-modules/js</code> file.</p>
 		</div>
 	</rich-description>
 	<group main="obligate">
@@ -99,6 +119,10 @@ Relative requires don't work yet, and `index.js` isn't dealt with correctly. Pat
 		<implementation id="sha1new=1a4446b14b453046313fb7599d7f67327328d653" released="2011-09-11" version="0.1">
 			<manifest-digest sha256="1e131b36c35a240fe0249608659d3bd80771b7d668717dedd8ef1ae1ec26d0c5"/>
 			<archive href="http://gfxmonk.net/dist/0install/obligate.js/obligate.js-0.1.tgz" size="3712"/>
+		</implementation>
+		<implementation id="sha1new=cbd04646de184e70fa2e297e53deec2af04b6aaa" released="2011-09-27" version="0.2">
+			<manifest-digest sha256="8c209194f024e9288ed89ebc87f7e911709545ec4fbbd4122955c203c072b70a"/>
+			<archive href="http://gfxmonk.net/dist/0install/obligate.js/obligate.js-0.2.tgz" size="3636"/>
 		</implementation>
 	</group>
 </interface>
