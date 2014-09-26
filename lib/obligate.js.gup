@@ -1,0 +1,3 @@
+#!bash -eu
+gup -u ../src/obligate.js.in
+../cpp_js ../src/obligate.js.in "$1"

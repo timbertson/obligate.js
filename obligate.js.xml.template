@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface xmlns="http://zero-install.sourceforge.net/2004/injector/interface" uri="http://gfxmonk.net/dist/0install/obligate.js.xml">
+	<name>obligate.js</name>
+	<summary>javascript module implementation with Zero Install integration</summary>
+	<publish xmlns="http://gfxmonk.net/dist/0install" mode="default"/>
+	<description>
+	</description>
+	<group main="obligate">
+		<requires interface="http://repo.roscidus.com/python/python"/>
+		<requires interface="http://gfxmonk.net/dist/0install/python-beautifulsoup.xml"/>
+		<requires interface="http://0install.net/2007/interfaces/ZeroInstall.xml">
+			<environment insert="" mode="prepend" name="PATH"/>
+		</requires>
+
+		<command name="run" path="obligate"/>
+		<environment insert="lib" mode="prepend" name="OBLIGATE_LIB"/>
+		<environment insert="" mode="prepend" name="PATH"/>
+		<implementation version="{version}">
+			<manifest-digest/>
+			<archive href="{archive}"/>
+		</implementation>
+	</group>
+</interface>

@@ -9,6 +9,7 @@ import shutil
 pjoin = os.path.join
 
 ENV_VARS = ('NODE_PATH',)
+dev_null = open(os.devnull, 'w')
 
 def main():
 	from optparse import OptionParser
@@ -16,6 +17,7 @@ def main():
 	p.add_option('-v', '--verbose', action='store_true')
 	p.add_option('-q', '--quiet', action='store_true')
 	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
+	p.add_option('-c', '--command', help='command to use for main feed', default='')
 	p.add_option('-f', '--force', action='store_true', help='clobber output dir without asking if it exists', default='0cache')
 	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
 			help='add a command line option to `0launch --get-selections` (may be specifid multiple times)')
@@ -34,12 +36,14 @@ def main():
 
 	env_vars = opts.env_vars or ENV_VARS
 
-	selections_xml = subprocess.check_output([
-		'0launch',
-		'--get-selections',
-		'--download-only',
-		'--command=',
-		'--console'] + opts.extra_opts + [url])
+	cmd = [
+		'0install',
+		'select',
+		'--xml',
+		'--command', opts.command,
+		'--console'] + opts.extra_opts + [url]
+	logging.debug("Command: %r", cmd)
+	selections_xml = subprocess.check_output(cmd)
 
 	def mkdirs(path):
 		if not os.path.isdir(path):
@@ -78,7 +82,7 @@ def main():
 				src_file = pjoin(src_path, filename)
 				dest_file = pjoin(dest_path, filename)
 				if os.path.exists(dest_file):
-					logging.warn("FILENAME CLASH: %s - not overwriting" % (dest_file,))
+					logging.warn("Filename clash: %s - not overwriting" % (filename,))
 					continue
 				if os.path.isdir(src_file):
 					shutil.copytree(src_file, dest_file)
@@ -124,7 +128,7 @@ class Selection(object):
 		for attr, val in manifest_attrs:
 			try:
 				logging.debug("looking for %s=%s" % (attr, val))
-				return subprocess.check_output(['0store', 'find', ('='.join([attr, val]))]).strip()
+				return subprocess.check_output(['0store', 'find', ('='.join([attr, val]))], stderr=dev_null).strip()
 			except subprocess.CalledProcessError, e:
 				logging.debug(e)
 		raise RuntimeEror("can't find path for selection: %s" % (self.selection,))

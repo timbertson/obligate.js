@@ -3,3 +3,4 @@
 0inst
 lib/*.js
 *-local.xml
+/gup
