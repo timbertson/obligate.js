@@ -6,10 +6,37 @@ import logging
 import hashlib
 import json
 import shutil
+import stat
 pjoin = os.path.join
 
 ENV_VARS = ('NODE_PATH',)
 dev_null = open(os.devnull, 'w')
+ZI_BIN = os.environ.get('OBLIGATE_ZI', '0install')
+
+def ro_rmtree(root):
+	"""
+	From zeroinstall.support
+	"""
+	import shutil
+	import platform
+	if (os.getcwd() + os.path.sep).startswith(root + os.path.sep):
+		import warnings
+		warnings.warn("Removing tree ({tree}) containing the current directory ({cwd}) - this will not work on Windows".format(cwd = os.getcwd(), tree = root), stacklevel = 2)
+
+	if os.path.isfile(root):
+		os.chmod(root, 0o700)
+		os.remove(root)
+	else:
+		if platform.system() == 'Windows':
+			for main, dirs, files in os.walk(root):
+				for i in files + dirs:
+					os.chmod(os.path.join(main, i), 0o700)
+			os.chmod(root, 0o700)
+		else:
+			for main, dirs, files in os.walk(root):
+				os.chmod(main, 0o700)
+		shutil.rmtree(root)
+
 
 def main():
 	from optparse import OptionParser
@@ -37,13 +64,14 @@ def main():
 	env_vars = opts.env_vars or ENV_VARS
 
 	cmd = [
-		'0install',
-		'select',
+		ZI_BIN,
+		'download',
 		'--xml',
 		'--command', opts.command,
 		'--console'] + opts.extra_opts + [url]
 	logging.debug("Command: %r", cmd)
 	selections_xml = subprocess.check_output(cmd)
+	logging.debug("Selections: %s", selections_xml)
 
 	def mkdirs(path):
 		if not os.path.isdir(path):
@@ -60,12 +88,13 @@ def main():
 	if(os.path.exists(dest_path)):
 		#TODO: add --force flag
 		if opts.force or raw_input("run rm -rf on %s? " % (dest_path)) == 'y':
-			shutil.rmtree(dest_path)
+			ro_rmtree(dest_path)
 		else:
 			return False
 
 	mkdirs(dest_path)
 
+	clashes = set()
 	for selection in selections:
 		selection_paths = selection.paths(env_vars)
 		if not selection_paths:
@@ -82,12 +111,21 @@ def main():
 				src_file = pjoin(src_path, filename)
 				dest_file = pjoin(dest_path, filename)
 				if os.path.exists(dest_file):
-					logging.warn("Filename clash: %s - not overwriting" % (filename,))
+					if filename not in clashes:
+						logging.warn("Filename clash: %s - not overwriting" % (filename,))
+						clashes.add(filename)
 					continue
 				if os.path.isdir(src_file):
 					shutil.copytree(src_file, dest_file)
 				else:
 					shutil.copyfile(src_file, dest_file)
+	
+	# make everything owner-writable
+	for path, dirs, files in os.walk(dest_path):
+		paths = map(lambda x: os.path.join(path, x), dirs + files)
+		for path in paths:
+			st = os.lstat(path)
+			os.chmod(path, st.st_mode | stat.S_IWUSR)
 
 class Selection(object):
 	def __init__(self, selection):
@@ -128,10 +166,10 @@ class Selection(object):
 		for attr, val in manifest_attrs:
 			try:
 				logging.debug("looking for %s=%s" % (attr, val))
-				return subprocess.check_output(['0store', 'find', ('='.join([attr, val]))], stderr=dev_null).strip()
+				return subprocess.check_output([ZI_BIN, 'store', 'find', ('='.join([attr, val]))], stderr=dev_null).strip()
 			except subprocess.CalledProcessError, e:
 				logging.debug(e)
-		raise RuntimeEror("can't find path for selection: %s" % (self.selection,))
+		raise RuntimeError("can't find path for selection: %s" % (self.selection,))
 
 if __name__ == '__main__':
 	sys.exit(main())
