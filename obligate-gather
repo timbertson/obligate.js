@@ -45,6 +45,7 @@ def main():
 	p.add_option('-q', '--quiet', action='store_true')
 	p.add_option('-o', '--output', help='output (cache) directory', default='0cache')
 	p.add_option('-c', '--command', help='command to use for main feed', default='')
+	p.add_option('--exclude', action='append', help='exlude a particular interface URI', default=[])
 	p.add_option('-f', '--force', action='store_true', help='clobber output dir without asking if it exists', default='0cache')
 	p.add_option('-x', '--opt', action='append', dest='extra_opts', default=[],
 			help='add a command line option to `0launch --get-selections` (may be specifid multiple times)')
@@ -99,6 +100,9 @@ def main():
 		selection_paths = selection.paths(env_vars)
 		if not selection_paths:
 			logging.debug("skipping selection for %s as it has no interesting envvars" % (selection.interface,))
+			continue
+		if selection.interface in opts.exclude:
+			logging.debug("skipping excluded interface %s" % (selection.interface,))
 			continue
 
 		logging.debug("\n%s: %s paths to copy" % (
