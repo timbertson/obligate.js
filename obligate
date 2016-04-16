@@ -4,4 +4,4 @@ base="$(dirname "$0")"
 cmd="$1"
 [ "$cmd" = "gather" -o "$cmd" = "combine" ] || (echo "Usage: obligate (combine|gather) OPTIONS..." >&2; exit 1)
 shift 1
-exec "$base/obligate-$cmd" "$@"
+exec "${PYTHON:-python}" "$base/obligate-$cmd" "$@"

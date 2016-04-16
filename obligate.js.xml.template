@@ -64,14 +64,29 @@ If you just want to alias the `obligate:` hub to `nodejs:` on the console (i.e a
 [0install]:        http://0install.net/
 	</description>
 	<group main="obligate">
-		<requires interface="http://repo.roscidus.com/python/python"/>
+		<requires interface="http://repo.roscidus.com/python/python">
+			<version before="3"/>
+			<executable-in-var name="PYTHON"/>
+		</requires>
 		<requires interface="http://gfxmonk.net/dist/0install/python-beautifulsoup.xml"/>
-		<requires interface="http://0install.net/tools/0install.xml">
+		<requires interface="http://0install.net/2007/interfaces/ZeroInstall.xml">
+			<executable-in-var command="0install" name="OBLIGATE_ZI_FALLBACK"/>
+		</requires>
+		<!-- XXX use this eventually (and remove the above binding
+		<requires importance="recommended" interface="http://0install.net/tools/0install.xml">
 			<executable-in-var name="OBLIGATE_ZI"/>
 		</requires>
-		<command name="run" path="obligate"/>
+		-->
+		<command name="run" path="obligate">
+			<runner interface="http://repo.roscidus.com/utils/bash"/>
+		</command>
+		<command name="gather" path="obligate-gather">
+			<runner interface="http://repo.roscidus.com/python/python"/>
+		</command>
+		<command name="combine" path="obligate-combine">
+			<runner interface="http://repo.roscidus.com/python/python"/>
+		</command>
 		<environment insert="lib" mode="prepend" name="OBLIGATE_LIB"/>
-		<environment insert="" mode="prepend" name="PATH"/>
 		<implementation version="{version}">
 			<manifest-digest/>
 			<archive href="{archive}"/>

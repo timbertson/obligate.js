@@ -11,7 +11,14 @@ pjoin = os.path.join
 
 ENV_VARS = ('NODE_PATH',)
 dev_null = open(os.devnull, 'w')
-ZI_BIN = os.environ.get('OBLIGATE_ZI', '0install')
+if 'OBLIGATE_ZI' in os.environ:
+	ZI_BIN = os.environ['OBLIGATE_ZI']
+	STORE_BIN = [ZI_BIN, 'store']
+else:
+	ZI_BIN = os.environ.get('OBLIGATE_ZI_FALLBACK', '0install')
+	STORE_BIN = ['0store'] # hope the user has 0install installed globally
+
+ZI_BIN = [ZI_BIN]
 
 def ro_rmtree(root):
 	"""
@@ -64,8 +71,7 @@ def main():
 
 	env_vars = opts.env_vars or ENV_VARS
 
-	cmd = [
-		ZI_BIN,
+	cmd = ZI_BIN + [
 		'download',
 		'--xml',
 		'--command', opts.command,
@@ -110,6 +116,10 @@ def main():
 
 		for src_relpath in selection_paths:
 			src_path = pjoin(selection.path, src_relpath)
+			if not os.path.exists(src_path):
+				logging.warn("Skipping non-existent path %s" % (src_path))
+				continue
+
 			logging.debug("copying:\n  %s\n  -> %s" % (src_path, dest_path))
 			for filename in os.listdir(src_path):
 				src_file = pjoin(src_path, filename)
@@ -170,7 +180,8 @@ class Selection(object):
 		for attr, val in manifest_attrs:
 			try:
 				logging.debug("looking for %s=%s" % (attr, val))
-				return subprocess.check_output([ZI_BIN, 'store', 'find', ('='.join([attr, val]))], stderr=dev_null).strip()
+				# XXX use this when we upgrade to 0install.xml
+				return subprocess.check_output(STORE_BIN + ['find', ('='.join([attr, val]))], stderr=dev_null).strip()
 			except subprocess.CalledProcessError, e:
 				logging.debug(e)
 		raise RuntimeError("can't find path for selection: %s" % (self.selection,))

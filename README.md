@@ -1,4 +1,7 @@
+<img src="http://gfxmonk.net/dist/status/project/obligate.js.png">
+
 #Obligate.js
+
 _It's a synonym of `require`, did you know?_
 
 **Obligate is a simple javascript helper that allows you to write modular javascript and serve it up to the browser effortlessly**
